@@ -180,4 +180,133 @@ $ sudo systemctl status ndbd
 Maka akan keluar output
 [gambar]
 
-## 4. Konfigurasi 
+## 4. Verifikasi Installasi Service Node
+Login pada service node dan donwload packagenya
+```
+$ wget https://dev.mysql.com/get/Downloads/MySQL-Cluster-7.6/mysql-cluster_7.6.6-1ubuntu16.04_amd64.deb-bundle.tar
+```
+Buat direktori dan masuk ke direktori tersebut
+```
+$ mkdir install
+$ cd install
+```
+Ekstrak package hasil download
+```
+$ tar -xvf mysql-cluster_7.6.6-1ubuntu16.04_amd64.deb-bundle.tar -C
+```
+Update dan install depedency
+```
+$ sudo apt update
+$ sudo apt install libaio1 libmecab2
+```
+Instal masing-masing package 
+```
+$ sudo dpkg -i mysql-common_7.6.6-1ubuntu16.04_amd64.deb
+$ sudo dpkg -i mysql-cluster-community-client_7.6.6-1ubuntu16.04_amd64.deb
+$ sudo dpkg -i mysql-client_7.6.6-1ubuntu16.04_amd64.deb
+$ sudo dpkg -i mysql-cluster-community-server_7.6.6-1ubuntu16.04_amd64.deb
+```
+Saat instalasi mysql cluster comunity server, maka akan muncul prompt untuk memasukan password root. masukan password vagrant
+
+Instal mysql server
+```
+$ sudo dpkg -i mysql-server_7.6.6-1ubuntu16.04_amd64.deb
+```
+tambahkan kode berikut pada konfigurasi di /etc/mysql/my.cnf
+```
+[mysqld]
+# Options for mysqld process:
+ndbcluster                         
+
+[mysql_cluster]
+# Options for NDB Cluster processes:
+ndb-connectstring=192.168.33.11
+```
+restart mysql server
+```
+$ sudo systemctl restart mysql
+```
+enable kan service mysql server
+```
+$ sudo systemctl enable mysql
+```
+### ** Lakukan step diatas pada semua service **
+Verifikasi service node
+
+jalankan command
+```
+$ mysql -u root -p 
+```
+Maka akan muncul tampilan
+```
+Welcome to the MySQL monitor.  Commands end with ; or \g.
+Your MySQL connection id is 3
+Server version: 5.7.22-ndb-7.6.6 MySQL Cluster Community Server (GPL)
+
+Copyright (c) 2000, 2018, Oracle and/or its affiliates. All rights reserved.
+
+Oracle is a registered trademark of Oracle Corporation and/or its
+affiliates. Other names may be trademarks of their respective
+owners.
+
+Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
+
+mysql>
+```
+Kemudian cek
+```
+mysql > SHOW ENGINE NDB STATUS \G
+```
+## 5. Instalasi ProxySQL
+Download instalasi ProxySQL, Jalankan command pada server Proxy untuk mendownload
+```
+$ cd /tmp
+$ curl -OL https://github.com/sysown/proxysql/releases/download/v1.4.4/proxysql_1.4.4-ubuntu16_amd64.deb
+```
+Install package yang sudah didownload
+```
+$ sudo dpkg -i proxysql_*
+```
+Untuk menghubungkan Service API dengan ProxySQL maka diperlukan instalasi mysql-client
+```
+$ sudo apt-get update
+$ sudo apt-get install mysql-client
+```
+Aktifkan layanan ProxySQL 
+```
+$ sudo systemctl start proxysql
+```
+Cek apakah sudah berhasil berjalan atau belum
+```
+$ sudo systemctl status proxysql
+```
+** Setting password Admin ProxySQL, secara default awal password nya adalah admin **
+```
+$ mysql -u admin -p -h 127.0.0.1 -P 6032 --prompt='ProxySQLAdmin> '
+```
+Ganti password dengan password yang diinginkan
+```
+ProxySQLAdmin > UPDATE global_variables SET variable_value='admin:passwordbaru' WHERE variable_name='admin-admin_credentials';
+ProxySQLAdmin > LOAD ADMIN VARIABLES TO RUNTIME;
+ProxySQLAdmin > SAVE ADMIN VARIABLES TO DISK;
+```
+## 6. Konfigurasi Monitoring di Service API
+Download file sql addition yang sudah disiapkan dengan command pada service API
+```
+$ curl -OL https://gist.github.com/lefred/77ddbde301c72535381ae7af9f968322/raw/5e40b03333a3c148b78aa348fd2cd5b5dbb36e4d/addition_to_sys.sql
+```
+Buat konfigurasi dalam file sql kedalam service
+```
+$ mysql -u root -p < addition_to_sys.sql
+```
+Login ke MySQL
+```
+$ mysql -u root -p
+```
+Buat user bernama monitor
+```
+CREATE USER 'monitor'@'%' IDENTIFIED BY 'monitorpassword';
+GRANT SELECT on sys.* to 'monitor'@'%';
+FLUSH PRIVILEGES;
+```
+### ** Lakukan step diatas pada semua service API**
