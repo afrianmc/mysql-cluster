@@ -310,3 +310,39 @@ GRANT SELECT on sys.* to 'monitor'@'%';
 FLUSH PRIVILEGES;
 ```
 ### ** Lakukan step diatas pada semua service API**
+## 7. Konfigurasi monitoring pada ProxySQL
+```
+ProxySQLAdmin > UPDATE global_variables SET variable_value='monitor' WHERE variable_name='mysql-monitor_username';
+ProxySQLAdmin > LOAD MYSQL VARIABLES TO RUNTIME;
+ProxySQLAdmin > SAVE MYSQL VARIABLES TO DISK;
+```
+Daftarkan service API kedalam ProxySQL
+```
+ProxySQLAdmin > INSERT INTO mysql_group_replication_hostgroups (writer_hostgroup, backup_writer_hostgroup, reader_hostgroup, offline_hostgroup, active, max_writers, writer_is_also_reader, max_transactions_behind) VALUES (2, 4, 3, 1, 1, 3, 1, 100);
+ProxySQLAdmin > INSERT INTO mysql_servers(hostgroup_id, hostname, port) VALUES (2, '192.168.31.104', 3306);
+ProxySQLAdmin > INSERT INTO mysql_servers(hostgroup_id, hostname, port) VALUES (2, '192.168.31.105', 3306);
+
+ProxySQLAdmin > LOAD MYSQL SERVERS TO RUNTIME;
+ProxySQLAdmin > SAVE MYSQL SERVERS TO DISK;
+```
+Cek apakah Service API sudah terhubung dengan ProxySQL
+```
+ProxySQLAdmin > SELECT hostgroup_id, hostname, status FROM runtime_mysql_servers;
+```
+
+## ** Buat User MySQL pada Service API untuk dapat diakses melalui ProxySQL **
+Login pada server service API
+```
+service1 > mysql -u root -p
+mysql > CREATE USER 'mysqlcluster'@'%' IDENTIFIED BY 'vagrant';
+mysql > GRANT ALL PRIVILEGES on clustertest.* to 'mysqlcluster'@'%';
+mysql > FLUSH PRIVILEGES;
+mysql > exit;
+```
+
+## ** Buat User MySQL pada ProxySQL agar dapat diakses melalui aplikasi **
+```
+ProxySQLAdmin > INSERT INTO mysql_users(username, password, default_hostgroup) VALUES ('mysqlcluster', 'vagrant', 2);
+ProxySQLAdmin > LOAD MYSQL USERS TO RUNTIME;
+ProxySQLAdmin > SAVE MYSQL USERS TO DISK;
+```
