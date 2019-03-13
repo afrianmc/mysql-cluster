@@ -1,6 +1,39 @@
 # Implementasi MySQL Cluster dengan Load Balancer menggunakan ProxySQL
 
 ## 1. Setting Up Machine Menggunakan Vagrant
+Dibawah ini merupakan pembagian Arsitektur dan IP:
+
+No | HostName |    IP    | Keterangan  |
+---|----------|----------|-------------|
+1  |clusterdb1|192.168.33.11|ndb-Manager|
+2 |clusterdb2|192.168.33.12|Node 1 dan API 1|
+3 |clusterdb3|192.168.33.13|Node 2 dan API 2|
+4 |clusterdb4|192.168.33.14|Load Balance(ProxySQL)|
+
+Pertama siapkan konfigurasi vagranfile seperti yang dibawah untuk membuat node. kali ini kita akan membuat 4 node yaitu 1 ndb-manager, 1 load balance(Proxy), 2 node dan 2 service API 
+
+```
+Vagrant.configure("2") do |config|
+  (1..4).each do |i|
+    config.vm.define "clusterdb#{i}" do |node|
+      node.vm.hostname = "clusterdb#{i}"
+      node.vm.box = "bento/ubuntu-18.04"
+      node.vm.network "private_network", ip: "192.168.33.1#{i}"
+
+      # Opsional. Edit sesuai dengan nama network adapter di komputer
+      # node.vm.network "public_network", bridge: "Qualcomm Atheros QCA9377 Wireless Network Adapter"
+      
+      node.vm.provider "virtualbox" do |vb|
+        vb.name = "clusterdb#{i}"
+        vb.gui = false
+        vb.memory = "512"
+      end
+
+      node.vm.provision "shell", path: "provision/bootstrap.sh", privileged: false
+    end
+  end
+end
+```
 ## 2. Instalasi dan Konfigurasi Cluster Manager
 
 Login ke Cluster Manager dan download ```.deb``` file:
