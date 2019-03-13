@@ -379,3 +379,7 @@ ProxySQLAdmin > INSERT INTO mysql_users(username, password, default_hostgroup) V
 ProxySQLAdmin > LOAD MYSQL USERS TO RUNTIME;
 ProxySQLAdmin > SAVE MYSQL USERS TO DISK;
 ```
+
+## Referensi
+https://www.digitalocean.com/community/tutorials/how-to-create-a-multi-node-mysql-cluster-on-ubuntu-18-04
+https://www.digitalocean.com/community/tutorials/how-to-use-proxysql-as-a-load-balancer-for-mysql-on-ubuntu-16-04
