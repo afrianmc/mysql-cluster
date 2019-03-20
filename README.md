@@ -125,14 +125,14 @@ Cek status
 $ sudo systemctl status ndb_mgmd
 ```
 Maka akan ada output:
-[gambar]
+![Ss]
 Tambahkan aturan untuk mengizinkan koneksi masuk lokal dari kedua node data
 ```
 $ sudo ufw allow from 192.168.33.12
 $ sudo ufw allow from 192.168.33.13
 ```
 Maka akan ada output:
-[gambar]
+![Ss](https://github.com/afrianmc/mysql-cluster/blob/master/screenshot/local%20connection%20from%20both%20data%20node.PNG)
 
 ## 3. Instalasi dan Konfigurasi Data Nodes 
 Login ke Data Nodes dan download ```.deb``` file:
